@@ -13,7 +13,7 @@ nothing less.
 
 ## Screenshots
 
-|![Screenshot](images/screenshot.png)|![Screenshot](images/screenshot.png)|
+|![Screenshot](images/screenshot.png)|![Screenshot](images/screenshot2.png)|
 |:-:|:-:|
 | Visiting Gopherpedia.com | Visiting Gopher.black |
 
