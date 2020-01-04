@@ -20,7 +20,7 @@ nothing less.
 ## Installing
 
 Just go ahead and download the [latest release](https://github.com/Lartu/OpenNapkin/releases) available.
-In order to run OpenNapking you must have `gambas3-runtime` installed on your system (if you are under
+In order to run OpenNapkin you must have `gambas3-runtime` installed on your system (if you are under
 Debian or Ubuntu you may install it by running `sudo apt install gambas3-runtime`).
 
 ## Contributing
