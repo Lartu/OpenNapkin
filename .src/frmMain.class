@@ -15,6 +15,7 @@ Public forward_list_ports As Integer[]
 Public current_address As String
 Public current_port As Integer
 Public bookmarks As String
+Public bookmark_buttons As Menu[]
 
 Public Sub add_back()
   If current_address <> "" Then
@@ -224,9 +225,78 @@ Public Sub txtPageContent_DblClick()
       forward_list.Clear
       btnForward.enabled = False
       visit_site(line_host[lineNumber] & line_path[lineNumber] & "\t" & text_entered, line_port[lineNumber])
+    Case "s", "4", "5", "6", "9", "g", "I", "d"
+      Dim filename As String, fullpath As String, path_parts As String[]
+      fullpath = line_host[lineNumber] & line_path[lineNumber]
+      path_parts = Split(fullpath, "/")
+      If path_parts.Length > 0 Then
+        filename = path_parts[path_parts.length - 1]
+        Dialog.path = filename
+        Dialog.Filter = ["*", "All Files"]
+        If Dialog.SaveFile() Then Return
+          download_file(Dialog.path, line_host[lineNumber], line_path[lineNumber], line_port[lineNumber])
+        End If
   End Select
   Catch
 End
+
+Public Sub download_file(path As String, host As String, selector As String, port As Integer)
+  Dim sBuf As String
+  
+  lblProgress.text = "Connecting to " & host & "..."
+  
+  Dim max_tries As Integer
+  max_tries = 100
+  
+  connection_socket = New Socket
+  connection_socket.Connect(host, port)
+
+  Do While (connection_socket.Status <> Net.Connected) And (connection_socket.Status > 0)
+    Wait 0.1
+    max_tries = max_tries - 1
+    If max_tries = 0 Then
+      connection_socket.Close
+      Break
+    Endif
+  Loop
+
+  If connection_socket.Status <= 0 Then
+    lblProgress.text = "Error connecting to " & host & "."
+    Return
+  End If
+  
+  lblProgress.text = "Fetching " & path & "..."
+
+  sBuf = selector & "\n"
+  Write #connection_socket, sBuf, Len(sBuf)
+
+  Do While Lof(connection_socket) = 0
+    Wait 0.1
+  Loop
+  
+  Dim download_buffer As String
+  Dim destinationFile As File
+  Dim byteCount As Integer, bytesToGet As Integer
+  destinationFile = Open path For Write Create
+  connection_socket.Blocking = True
+  While Not Eof(connection_socket)
+    bytesToGet = Lof(connection_socket)
+    byteCount = bytesToGet + byteCount
+    lblProgress.text = "Fetching " & path & " (" & byteCount & " bytes)..."
+    lblProgress.Refresh
+    Wait 0.0
+    Read #connection_socket, download_buffer, bytesToGet
+    Write #destinationFile, download_buffer, download_buffer.Len
+  Wend
+  destinationFile.Close
+  'File.Save(path, download_buffer)
+  
+  lblProgress.text = "Downloaded " & path & "."
+  Close #connection_socket
+  'Catch
+   ' lblProgress.text = "Error dowloading " & path & "..."
+End
+
 
 
 Public Sub Form_Open()
@@ -236,14 +306,22 @@ Public Sub Form_Open()
   forward_list = New String[0]
   back_list_ports = New Integer[0]
   forward_list_ports = New Integer[0]
+  bookmark_buttons = New Menu[0]
   current_address = ""
   current_port = 70
   ' Load bookmarks
   load_bookmarks
 End
 
-Private Sub load_bookmarks()
+Public Sub load_bookmarks()
   Dim bookmark_list As String[], i As Integer
+  If bookmark_buttons.Length > 0 Then
+    Dim bm As Menu
+    For Each bm In bookmark_buttons
+      bm.Delete()
+    Next
+    bookmark_buttons.clear
+  Endif
   bookmarks = File.Load("~/.opennapkin_bookmarks")
   bookmark_list = Split(bookmarks, "\n")
   For i = 0 To bookmark_list.Length - 1
@@ -252,11 +330,14 @@ Private Sub load_bookmarks()
     If bookmark_parts.length < 2 Then
       Continue
     Endif
+    If bookmark_parts[0] = "*" Then
+      Continue
+    Endif
     add_bookmark_button(Trim(bookmark_list[i]))
   Next
   Catch
     'No bookmark file found
-    File.Save("~/.opennapkin_bookmarks", "")
+    File.Save("~/.opennapkin_bookmarks", "* OpenNapkin Bookmarks File\n* Line format:\n* <port> <gopher address>")
 End
 
 Private Sub add_bookmark_button(text As String)
@@ -272,6 +353,7 @@ Private Sub add_bookmark_button(text As String)
   address = bookmark_parts.Join(" ")
   bookmark_button.Text = address
   bookmark_button.Tag = port
+  bookmark_buttons.Add(bookmark_button)
 End
 
 Public Sub bookmarkedItem_Click()
@@ -336,4 +418,20 @@ End
 
 Public Sub menAbout_Click()
   frmAbout.ShowModal
+End
+
+Public Sub btnSavePage_Click()
+  Dialog.Filter = ["*.txt", "Text Files"]
+  If Dialog.SaveFile() Then Return
+  File.Save(Dialog.Path, txtPageContent.Text)
+Catch
+  Message.Info(Error.Text)
+End
+
+Public Sub btnBookmarkEditor_Click()
+  frmBookmarkEditor.ShowModal
+End
+
+Public Sub menBookmarkThis_Click()
+  add_bookmark
 End

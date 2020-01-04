@@ -6,18 +6,42 @@
   Arrangement = Arrange.Fill
   { menFile Menu
     Text = ("File")
+    { btnSavePage Menu
+      Text = ("Save Page")
+      Picture = Picture["icon:/22/save"]
+      Shortcut = "Ctrl+S"
+    }
+    { Menu2 Menu
+    }
     { menQuit Menu
       Text = ("Quit")
       Shortcut = "Ctrl+Q"
     }
   }
+  { menHistory Menu
+    Text = ("History")
+    Enabled = False
+  }
   { menBookmarks Menu
     Text = ("Bookmarks")
+    { menBookmarkThis Menu
+      Text = ("Bookmark this page")
+      Picture = Picture["icon:/22/bookmark"]
+      Shortcut = "Ctrl+B"
+    }
+    { btnBookmarkEditor Menu
+      Text = ("Edit bookmarks file")
+      Picture = Picture["icon:/22/edit"]
+      Shortcut = "Ctrl+Shift+B"
+    }
+    { Menu1 Menu
+    }
   }
   { menHelp Menu
     Text = ("Help")
     { menAbout Menu
       Text = ("About")
+      Shortcut = "F1"
     }
   }
   { VBox1 VBox

@@ -1,0 +1,24 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,64,64)
+  Text = ("OpenNapkin Bookmark Editor")
+  Arrangement = Arrange.Fill
+  { Menu1 Menu
+    Text = ("File")
+    { btnSaveBMEdition Menu
+      Text = ("Save and exit")
+      Picture = Picture["icon:/22/save"]
+      Shortcut = "Ctrl+S"
+    }
+    { Menu2 Menu
+      Text = ("Discard changes")
+      Picture = Picture["icon:/22/clear"]
+    }
+  }
+  { txtBookmarkEdit TextArea
+    MoveScaled(15,19.875,34,21)
+    Font = Font["Monospace"]
+    Expand = True
+  }
+}

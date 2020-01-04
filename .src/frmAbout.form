@@ -6,7 +6,7 @@
   Resizable = False
   { lblONInfo TextLabel
     MoveScaled(1,1,40,12)
-    Text = ("<h2 style=\"margin-bottom: 0px\">\n<font color=\"darkcyan\">Open</font>Napkin\n<small>Gopher Browser</small></h2> \n\nVersion <b>1.0.0</b> \"El Palmar\"<p>\nCreated by <b>Martín del Río</b> (<i>www.lartu.net</i>).\n<br>\n<small>Copyright &copy; 2020, released under the <b>Apache License 2.0</b>.</small>")
+    Text = ("<h2 style=\"margin-bottom: 0px\">\n<font color=\"darkcyan\">Open</font>Napkin\n<small>Gopher Browser</small></h2> \n\nVersion <b>1.1.0</b> \"El Palmar\"<p>\nCreated by <b>Martín del Río</b> (<i>www.lartu.net</i>).\n<br>\n<small>Copyright &copy; 2020, released under the <b>Apache License 2.0</b>.</small>")
     Alignment = Align.TopLeft
   }
 }

@@ -1,0 +1,23 @@
+' Gambas class file
+
+
+Public Sub Form_Open()
+  Dim bookmarks_text As String
+  bookmarks_text = File.Load("~/.opennapkin_bookmarks")
+  txtBookmarkEdit.text = Trim(bookmarks_text)
+  Catch
+End
+
+Public Sub Menu2_Click()
+  Dim result As Integer
+  result = Message.Question("Go back discarding unsaved changes (if any)?", "Yes", "Cancel")
+  If result = 1 Then
+    Me.Close
+  End If
+End
+
+Public Sub btnSaveBMEdition_Click()
+  File.Save("~/.opennapkin_bookmarks", txtBookmarkEdit.text)
+  frmMain.load_bookmarks
+  Me.close
+End

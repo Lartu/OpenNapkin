@@ -13,6 +13,7 @@ Authors="Martín del Río"
 TabSize=2
 Translate=1
 Language=en_US
+KeepDebugInfo=0
 Maintainer=martu
 Vendor=Lartu
 Address=martin@lartu.net
