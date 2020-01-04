@@ -5,8 +5,8 @@
 </p>
 
 **OpenNapkin** is a graphical [Gopher](https://en.wikipedia.org/wiki/Gopher_(protocol)) client written in 
-[Gambas3](http://gambas.sourceforge.net/en/main.html). I wrote OpenNapkin as I wasn't able to find other
-Gopher client that wasn't written for console only or that wasn't part of a much bigger web-browsing suite.
+[Gambas3](http://gambas.sourceforge.net/en/main.html). I wrote OpenNapkin because I wasn't able to find another
+Gopher client that wasn't written only for console or that wasn't part of a much bigger web-browsing suite.
 **OpenNapkin** offers just what you can see on the screeshot: a way to load Gopher sites, basic interaction
 (double clicking on a line lets you interact with that line) and basic bookmark keeping. Nothing more,
 nothing less.
