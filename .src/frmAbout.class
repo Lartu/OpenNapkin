@@ -1,0 +1,11 @@
+' Gambas class file
+
+' Naming scheme: https://es.wikipedia.org/wiki/Anexo:Parques_nacionales_de_Argentina
+' < h2 style = "margin-bottom: 0px" >
+' < font color = "darkcyan" > Open < / font > Napkin
+' < small > Gopher Browser < / small > < / h2 > 
+' 
+' Version < b > 1.0.0 < / b > "El Palmar" < p >
+' Created by < b > Mart ín del Río</b> (<i>www.lartu.net</i>).
+' < br >
+' < small > Copyright & Copy ; 2020, released under the < b > Apache License 2.0 < / b > . < / small >

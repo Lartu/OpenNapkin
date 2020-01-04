@@ -1,0 +1,339 @@
+' Gambas class file
+
+' Gambas class selector
+
+Public connection_socket As Socket
+Public line_type As String[]
+Public line_path As String[]
+Public line_host As String[]
+Public line_port As Integer[]
+Public line_prompt As String[]
+Public back_list As String[]
+Public back_list_ports As Integer[]
+Public forward_list As String[]
+Public forward_list_ports As Integer[]
+Public current_address As String
+Public current_port As Integer
+Public bookmarks As String
+
+Public Sub add_back()
+  If current_address <> "" Then
+    back_list.Add(current_address)
+    back_list_ports.Add(current_port)
+    btnBack.Enabled = True
+  Endif
+End
+
+
+Public Sub visit_site(domain As String, port As Integer)
+  Dim sBuf As String
+  
+  btnAddBookmark.Enabled = False
+  btnRefresh.enabled = False
+  current_address = domain
+  current_port = port
+  txtPageContent.Clear
+  
+  If Len(domain) >= 9 Then
+    If Lower(Mid(domain, 1, 9)) = "gopher://" Then
+      domain = Mid(domain, 10, domain.Len - 9)
+    Endif
+  Else If Len(domain) = 0 Then
+    Return
+  Endif
+  
+  lblProgress.text = "Connecting to " & domain & "..."
+  
+  Dim tokens As String[]
+  tokens = Split(domain, "/")
+  domain = tokens[0]
+  line_type = New String[0]
+  line_path = New String[0]
+  line_host = New String[0]
+  line_port = New Integer[0]
+  line_prompt = New String[0]
+  
+  Dim selector As String
+  selector = "/"
+  If tokens.Length > 1 Then
+    tokens.Delete(0)
+    selector = "/" & tokens.join("/")
+  End If
+  
+  txtDomain.text = "gopher://" & domain & selector
+  
+  Dim max_tries As Integer
+  max_tries = 100
+  
+  connection_socket = New Socket
+  connection_socket.Connect(domain, port)
+
+  Do While (connection_socket.Status <> Net.Connected) And (connection_socket.Status > 0)
+    Wait 0.1
+    max_tries = max_tries - 1
+    If max_tries = 0 Then
+      connection_socket.Close
+      Break
+    Endif
+  Loop
+
+  If connection_socket.Status <= 0 Then
+    lblProgress.text = "Error connecting to " & domain & "."
+    Return
+  End If
+  
+  lblProgress.text = "Loading " & domain & "..."
+
+  sBuf = selector & "\n"
+  Write #connection_socket, sBuf, Len(sBuf)
+
+  Do While Lof(connection_socket) = 0
+    Wait 0.1
+  Loop
+  Read #connection_socket, sBuf, Lof(connection_socket)
+  
+  Dim page_lines As String[]
+  page_lines = Split(sBuf, "\n")
+  Dim i As Integer
+  For i = 0 To page_lines.Length - 1
+    If Trim(page_lines[i]) = "." Then
+      Break
+    End If
+    Dim line_tokens As String[]
+    line_tokens = Split(Trim(page_lines[i]), "\t")
+    If line_tokens.Length < 2 Then
+      txtPageContent.Text = txtPageContent.text & page_lines[i] & "\n"
+      line_path.Add("")
+      line_host.Add("")
+      line_port.Add(0)
+      line_type.Add("i")
+      line_prompt.Add("")
+    Else
+      If line_tokens.length > 1 Then line_path.Add(line_tokens[1]) Else line_path.Add("")
+      If line_tokens.length > 2 Then line_host.Add(line_tokens[2]) Else line_host.Add("")
+      If line_tokens.length > 3 Then
+        Dim value As Variant
+        value = Val(line_tokens[3])
+        If IsNull(value) Then line_port.Add(0) Else line_port.Add(value)
+      Else
+        line_port.Add(70)
+      End If
+      Dim line_type_char As String 
+      If line_tokens[0].Len < 1 Then
+        txtPageContent.Text = txtPageContent.text & "\n"
+        line_type.Add("i")
+      Else
+        Dim line_contents, prefix As String
+        line_contents = Mid(line_tokens[0], 2, line_tokens[0].Len)
+        line_type_char = line_tokens[0][0]
+        line_type.Add(line_type_char)
+        Select Case line_type_char
+          Case "i"
+            prefix = "          "
+          Case "0"
+            prefix = "(Text)    "
+          Case "1"
+            prefix = "(Submenu) "
+          Case "2"
+            prefix = "(Error)   "
+          Case "3"
+            prefix = "(CCSO)    "
+          Case "4"
+            prefix = "(BinHex)  "
+          Case "5"
+            prefix = "(DOS)     "
+          Case "6"
+            prefix = "(Uuenc.)  "
+          Case "7"
+            prefix = "(Entry)   "
+          Case "8"
+            prefix = "(Telnet)  "
+          Case "9"
+            prefix = "(Binary)  "
+          Case "+"
+            prefix = "(Mirror)  "
+          Case "g"
+            prefix = "(GIF)     "
+          Case "I"
+            prefix = "(Image)   "
+          Case "T"
+            prefix = "(Tel3270) "
+          Case "d"
+            prefix = "(DOC/PDF) "
+          Case "h"
+            prefix = "(HTML)    "
+          Case "s"
+            prefix = "(Audio)   "
+          Case Else
+            prefix = line_type_char
+        End Select
+        If line_type_char <> "7" Then
+          line_prompt.Add("")
+        Else
+          line_prompt.Add(line_contents)
+        Endif
+        txtPageContent.Text = txtPageContent.text & prefix & line_contents & "\n"
+      Endif
+    Endif
+  Next
+  
+  lblProgress.text = "Loaded " & domain & "."
+  
+  btnAddBookmark.Enabled = True  
+  btnRefresh.enabled = True
+  txtPageContent.line = 0
+  txtPageContent.Select(0, 0)
+
+  Close #connection_socket
+  Catch
+End
+
+
+Public Sub btnGo_Click()
+  Dim domain As String
+  domain = Trim(txtDomain.text)
+  If domain <> "" Then
+    add_back()
+    forward_list.Clear
+    btnForward.enabled = False
+    visit_site(domain, 70)
+  End If
+End
+
+Public Sub txtDomain_KeyPress()
+  If Key.Code = key.Return Or Key.code = Key.Enter Then
+    btnGo_Click()
+  Endif
+End
+
+Public Sub txtPageContent_DblClick()
+  Dim lineNumber As Integer
+  Dim pressed_line_type As String
+  lineNumber = txtPageContent.Line
+  pressed_line_type = line_type[lineNumber]
+  Select Case pressed_line_type
+    Case "1", "h", "0"
+      add_back()
+      forward_list.Clear
+      btnForward.enabled = False
+      visit_site(line_host[lineNumber] & line_path[lineNumber], line_port[lineNumber])
+    Case "7"
+      Dim text_entered As String
+      text_entered = InputBox(line_prompt[lineNumber], "OpenNapkin Text Entry", "")
+      add_back()
+      forward_list.Clear
+      btnForward.enabled = False
+      visit_site(line_host[lineNumber] & line_path[lineNumber] & "\t" & text_entered, line_port[lineNumber])
+  End Select
+  Catch
+End
+
+
+Public Sub Form_Open()
+  Me.width = 800
+  Me.height = 600
+  back_list = New String[0]
+  forward_list = New String[0]
+  back_list_ports = New Integer[0]
+  forward_list_ports = New Integer[0]
+  current_address = ""
+  current_port = 70
+  ' Load bookmarks
+  load_bookmarks
+End
+
+Private Sub load_bookmarks()
+  Dim bookmark_list As String[], i As Integer
+  bookmarks = File.Load("~/.opennapkin_bookmarks")
+  bookmark_list = Split(bookmarks, "\n")
+  For i = 0 To bookmark_list.Length - 1
+    Dim bookmark_parts As String[]
+    bookmark_parts = Split(Trim(bookmark_list[i]), " ")
+    If bookmark_parts.length < 2 Then
+      Continue
+    Endif
+    add_bookmark_button(Trim(bookmark_list[i]))
+  Next
+  Catch
+    'No bookmark file found
+    File.Save("~/.opennapkin_bookmarks", "")
+End
+
+Private Sub add_bookmark_button(text As String)
+  If text = "" Then
+    Return
+  Endif
+  Dim bookmark_button As Menu
+  bookmark_button = New Menu(menBookmarks, False) As "bookmarkedItem"
+  Dim bookmark_parts As String[], port As String, address As String
+  bookmark_parts = Split(text, " ")
+  port = bookmark_parts[0]
+  bookmark_parts.Delete(0)
+  address = bookmark_parts.Join(" ")
+  bookmark_button.Text = address
+  bookmark_button.Tag = port
+End
+
+Public Sub bookmarkedItem_Click()
+  add_back()
+  forward_list.Clear
+  btnForward.enabled = False
+  visit_site(Last.text, Val(Last.tag))
+End
+
+
+Public Sub add_bookmark()
+  If current_address <> "" Then
+    bookmarks = bookmarks & "\n" & current_port & " " & current_address
+    File.Save("~/.opennapkin_bookmarks", bookmarks)
+    add_bookmark_button(current_port & " " & current_address)
+  Endif
+End
+
+
+Public Sub btnRefresh_Click()
+  visit_site(current_address, current_port)
+End
+
+Public Sub btnBack_Click()
+  If back_list.Length > 0 Then
+    Dim domain As String, port As Integer
+    domain = back_list.Pop()
+    port = back_list_ports.Pop()
+    If back_list.Length == 0 Then
+      btnBack.enabled = False
+    Endif
+    forward_list.Add(current_address)
+    forward_list_ports.Add(current_port)
+    btnForward.enabled = True
+    visit_site(domain, port)
+  Endif
+End
+
+Public Sub btnForward_Click()
+  If forward_list.Length > 0 Then
+    Dim domain As String, port As Integer
+    domain = forward_list.Pop()
+    port = forward_list_ports.Pop()
+    If forward_list_ports.Length == 0 Then
+      btnForward.enabled = False
+    Endif
+    back_list.Add(current_address)
+    back_list_ports.Add(current_port)
+    btnBack.enabled = True
+    visit_site(domain, port)
+  Endif
+End
+
+Public Sub btnAddBookmark_Click()
+  add_bookmark
+End
+
+Public Sub menQuit_Click()
+  Quit
+End
+
+
+Public Sub menAbout_Click()
+  frmAbout.ShowModal
+End
