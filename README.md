@@ -5,22 +5,22 @@
 </p>
 
 **OpenNapkin** is a graphical [Gopher](https://en.wikipedia.org/wiki/Gopher_(protocol)) client written in 
-[Gambas3](http://gambas.sourceforge.net/en/main.html). I wrote OpenNapkin as I wasn't able to find other
-Gopher client that wasn't written for console only or that wasn't part of a much bigger web-browsing suite.
+[Gambas3](http://gambas.sourceforge.net/en/main.html). I wrote OpenNapkin because I wasn't able to find another
+Gopher client that wasn't written only for console or that wasn't part of a much bigger web-browsing suite.
 **OpenNapkin** offers just what you can see on the screeshot: a way to load Gopher sites, basic interaction
 (double clicking on a line lets you interact with that line) and basic bookmark keeping. Nothing more,
 nothing less.
 
 ## Screenshots
 
-|![Screenshot](images/screenshot.png)|![Screenshot](images/screenshot.png)|
+|![Screenshot](images/screenshot.png)|![Screenshot](images/screenshot2.png)|
 |:-:|:-:|
 | Visiting Gopherpedia.com | Visiting Gopher.black |
 
 ## Installing
 
 Just go ahead and download the [latest release](https://github.com/Lartu/OpenNapkin/releases) available.
-In order to run OpenNapking you must have `gambas3-runtime` installed on your system (if you are under
+In order to run OpenNapkin you must have `gambas3-runtime` installed on your system (if you are under
 Debian or Ubuntu you may install it by running `sudo apt install gambas3-runtime`).
 
 ## Contributing
