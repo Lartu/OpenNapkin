@@ -48,11 +48,6 @@ Public Sub visit_site(domain As String, port As Integer)
   Dim tokens As String[]
   tokens = Split(domain, "/")
   domain = tokens[0]
-  line_type = New String[0]
-  line_path = New String[0]
-  line_host = New String[0]
-  line_port = New Integer[0]
-  line_prompt = New String[0]
   
   Dim selector As String
   selector = "/"
@@ -68,6 +63,7 @@ Public Sub visit_site(domain As String, port As Integer)
   
   connection_socket = New Socket
   connection_socket.Connect(domain, port)
+  connection_socket.Blocking = False
 
   Do While (connection_socket.Status <> Net.Connected) And (connection_socket.Status > 0)
     Wait 0.1
@@ -83,7 +79,9 @@ Public Sub visit_site(domain As String, port As Integer)
     Return
   End If
   
-  lblProgress.text = "Loading " & domain & "..."
+  lblProgress.text = "Requesting " & domain & "..."
+  lblProgress.Refresh
+  Wait 0.0
 
   sBuf = selector & "\n"
   Write #connection_socket, sBuf, Len(sBuf)
@@ -91,43 +89,72 @@ Public Sub visit_site(domain As String, port As Integer)
   Do While Lof(connection_socket) = 0
     Wait 0.1
   Loop
-  Read #connection_socket, sBuf, Lof(connection_socket)
+  
+  sBuf = ""
+  Dim download_buffer As String
+  Dim byteCount As Integer, bytesToGet As Integer
+  While True
+    bytesToGet = 256
+    byteCount = bytesToGet + byteCount
+    lblProgress.text = "Fetching " & domain & " (" & byteCount & " bytes)..."
+    Wait 0.0
+    Try Read #connection_socket, download_buffer, bytesToGet
+    If Error Or download_buffer.Len = 0 Then
+      lblProgress.text = "Fetched " & domain & " (" & byteCount & " bytes)..."
+      Wait 0.0
+      Break
+    Endif
+    sBuf = sBuf & download_buffer
+    If connection_socket.status < 0 Then
+      lblProgress.text = "Error loading " & domain & "..."
+      Return
+    End If
+  Wend
   
   Dim page_lines As String[]
   page_lines = Split(sBuf, "\n")
+  line_type = New String[page_lines.length]
+  line_path = New String[page_lines.length]
+  line_host = New String[page_lines.length]
+  line_port = New Integer[page_lines.length]
+  line_prompt = New String[page_lines.length]
+  Dim line_tokens As String[]
+  Dim value As Variant
   Dim i As Integer
+  Dim line_type_char As String 
+  Dim line_contents, prefix As String
+  Dim page_contents As String
+  page_contents = ""
   For i = 0 To page_lines.Length - 1
+    lblProgress.text = "Processing line " & (i + 1) & " / " & page_lines.Length & "..."
+    Wait 0.0
     If Trim(page_lines[i]) = "." Then
       Break
     End If
-    Dim line_tokens As String[]
     line_tokens = Split(Trim(page_lines[i]), "\t")
     If line_tokens.Length < 2 Then
-      txtPageContent.Text = txtPageContent.text & page_lines[i] & "\n"
-      line_path.Add("")
-      line_host.Add("")
-      line_port.Add(0)
-      line_type.Add("i")
-      line_prompt.Add("")
+      page_contents &= page_lines[i] & "\n"
+      line_path[i] = ""
+      line_host[i] = ""
+      line_port[i] = 0
+      line_type[i] = "i"
+      line_prompt[i] = ""
     Else
-      If line_tokens.length > 1 Then line_path.Add(line_tokens[1]) Else line_path.Add("")
-      If line_tokens.length > 2 Then line_host.Add(line_tokens[2]) Else line_host.Add("")
+      If line_tokens.length > 1 Then line_path[i] = line_tokens[1] Else line_path[i] = ""
+      If line_tokens.length > 2 Then line_host[i] = line_tokens[2] Else line_host[i] = ""
       If line_tokens.length > 3 Then
-        Dim value As Variant
         value = Val(line_tokens[3])
-        If IsNull(value) Then line_port.Add(0) Else line_port.Add(value)
+        If IsNull(value) Then line_port[i] = 0 Else line_port[i] = value
       Else
-        line_port.Add(70)
+        line_port[i] = 70
       End If
-      Dim line_type_char As String 
       If line_tokens[0].Len < 1 Then
-        txtPageContent.Text = txtPageContent.text & "\n"
-        line_type.Add("i")
+        page_contents &= "\n"
+        line_type[i] = "i"
       Else
-        Dim line_contents, prefix As String
         line_contents = Mid(line_tokens[0], 2, line_tokens[0].Len)
         line_type_char = line_tokens[0][0]
-        line_type.Add(line_type_char)
+        line_type[i] = line_type_char
         Select Case line_type_char
           Case "i"
             prefix = "          "
@@ -169,16 +196,18 @@ Public Sub visit_site(domain As String, port As Integer)
             prefix = line_type_char
         End Select
         If line_type_char <> "7" Then
-          line_prompt.Add("")
+          line_prompt[i] = ""
         Else
-          line_prompt.Add(line_contents)
+          line_prompt[i] = line_contents
         Endif
-        txtPageContent.Text = txtPageContent.text & prefix & line_contents & "\n"
+          page_contents &= prefix & line_contents & "\n"
       Endif
     Endif
   Next
   
-  lblProgress.text = "Loaded " & domain & "."
+  txtPageContent.Text = page_contents
+  
+  lblProgress.text = "Loaded " & domain & " (" & byteCount & " bytes, " & page_lines.Length & " lines)."
   
   btnAddBookmark.Enabled = True  
   btnRefresh.enabled = True
@@ -186,7 +215,8 @@ Public Sub visit_site(domain As String, port As Integer)
   txtPageContent.Select(0, 0)
 
   Close #connection_socket
-  Catch
+  ' Catch
+  '   lblProgress.text = "Error during processing of " & domain & "..."
 End
 
 
@@ -265,7 +295,9 @@ Public Sub download_file(path As String, host As String, selector As String, por
     Return
   End If
   
-  lblProgress.text = "Fetching " & path & "..."
+  lblProgress.text = "Requesting " & path & "..."
+  lblProgress.Refresh
+  Wait 0.0
 
   sBuf = selector & "\n"
   Write #connection_socket, sBuf, Len(sBuf)

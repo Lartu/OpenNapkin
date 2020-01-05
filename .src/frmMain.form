@@ -120,9 +120,5 @@
       Text = ("Welcome to <b><font color=\"darkcyan\">Open</font>Napkin</b>!")
       Alignment = Align.Center
     }
-    { Timer1 #Timer
-      #MoveScaled(134,90)
-      Delay = 50
-    }
   }
 }
